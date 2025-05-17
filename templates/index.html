@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monitoramento da Máquina</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-800">
+  <div class="max-w-4xl mx-auto mt-10 p-6 bg-white rounded-2xl shadow-md space-y-6">
+    <h1 class="text-2xl font-bold text-center">Monitoramento da Eficiência da Máquina</h1>
+
+    <form method="post" action="/" class="flex flex-col sm:flex-row gap-4 items-center justify-center">
+      <div class="flex flex-col w-full sm:w-auto">
+        <label for="city" class="text-sm font-medium">Cidade:</label>
+        <input
+          type="text"
+          id="city"
+          name="city"
+          value="{{ city }}"
+          class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+      <button
+        type="submit"
+        class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"
+      >
+        Atualizar
+      </button>
+    </form>
+
+    {% if temperature is not none %}
+    <div class="text-center space-y-1">
+      <p><strong>Data/Hora:</strong> {{ timestamp }}</p>
+      <p><strong>Temperatura:</strong> {{ temperature }}°C</p>
+      <p><strong>Eficiência:</strong> {{ efficiency }}%</p>
+    </div>
+    {% else %}
+    <p class="text-center text-red-500">Erro ao consultar temperatura.</p>
+    {% endif %}
+
+    <div>
+      <h2 class="text-lg font-semibold mb-4">Histórico (últimos {{ history|length }})</h2>
+      <canvas id="lineChart" class="w-full h-64"></canvas>
+    </div>
+  </div>
+
+  <script id="history-data" type="application/json">
+    {{ history | tojson | safe }}
+  </script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

@@ -13,22 +13,24 @@
   <script src="/static/js/main.js"></script>
 </head>
 
-<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors duration-500">
+<body class="bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900 text-gray-200 transition-colors duration-500">
+
   <div class="max-w-4xl mx-auto mt-10 p-8 bg-white dark:bg-gray-800 rounded-3xl shadow-xl space-y-8">
-    
+
     <!-- Header com gradiente -->
     <header class="text-center mb-6">
-      <h1 class="text-4xl font-extrabold bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 bg-clip-text text-transparent">
+      <h1
+        class="text-4xl font-extrabold bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 bg-clip-text text-transparent">
         Monitoramento da Eficiência da Máquina
       </h1>
       <p class="mt-2 text-gray-500 dark:text-gray-400">Sua máquina, sempre sob controle</p>
     </header>
 
-    <!-- Formulario com espaçamento e sombra -->
+    <!-- Formulário -->
     <form method="post" action="/" class="flex flex-col sm:flex-row gap-4 justify-center items-center">
       <label for="city" class="sr-only">Cidade:</label>
       <input type="text" id="city" name="city" value="{{ city }}" placeholder="Digite a cidade"
-  class="flex-grow px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-indigo-400 transition text-black" />
+        class="flex-grow px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-indigo-400 transition text-black" />
       <button type="submit"
         class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl shadow-md hover:bg-indigo-700 transition flex items-center justify-center gap-2">
         Atualizar
@@ -45,25 +47,25 @@
       <div
         class="bg-gradient-to-tr from-indigo-100 to-purple-200 dark:from-indigo-700 dark:to-purple-900 rounded-2xl p-6 shadow-lg flex flex-col items-center">
         <h2 class="text-lg font-semibold mb-2">Cidade</h2>
-        <p class="text-2xl font-bold">{{ city }}</p>
+        <p class="text-2xl font-bold" id="city-display">{{ city }}</p>
       </div>
 
       <div
         class="bg-gradient-to-tr from-green-100 to-teal-200 dark:from-green-700 dark:to-teal-900 rounded-2xl p-6 shadow-lg flex flex-col items-center">
         <h2 class="text-lg font-semibold mb-2">Data/Hora</h2>
-        <p class="text-xl">{{ timestamp }}</p>
+        <p class="text-xl" id="timestamp">{{ timestamp }}</p>
       </div>
 
       <div
         class="bg-gradient-to-tr from-yellow-100 to-orange-200 dark:from-yellow-700 dark:to-orange-900 rounded-2xl p-6 shadow-lg flex flex-col items-center">
         <h2 class="text-lg font-semibold mb-2">Temperatura</h2>
-        <p class="text-3xl font-extrabold">{{ temperature }}°C</p>
+        <p class="text-3xl font-extrabold"><span id="temperature">{{ temperature }}°C</span></p>
       </div>
 
       <div
         class="bg-gradient-to-tr from-pink-100 to-red-200 dark:from-pink-700 dark:to-red-900 rounded-2xl p-6 shadow-lg flex flex-col items-center">
         <h2 class="text-lg font-semibold mb-2">Eficiência</h2>
-        <p class="text-3xl font-extrabold">{{ efficiency }}%</p>
+        <p class="text-3xl font-extrabold"><span id="efficiency">{{ efficiency }}%</span></p>
       </div>
     </div>
     {% elif city %}
@@ -77,14 +79,12 @@
     {% endif %}
 
     <!-- Botões de ação -->
-    <div
-      class="flex flex-wrap justify-center gap-4 mt-4 mb-8">
+    <div class="flex flex-wrap justify-center gap-4 mt-4 mb-8">
       <a href="/download-excel"
         class="flex items-center gap-2 px-6 py-3 bg-green-600 text-white font-semibold rounded-xl shadow-md hover:bg-green-700 transition">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"
           stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M12 3v12m6 6H6a4 4 0 01-4-4 4 4 0 014-4h12a4 4 0 014 4 4 4 0 01-4 4z" />
+          <path d="M12 3v12m6 6H6a4 4 0 01-4-4 4 4 0 014-4h12a4 4 0 014 4 4 4 0 01-4 4z" />
         </svg>
         Exportar Excel
       </a>
@@ -126,8 +126,8 @@
   <script id="history-data" type="application/json">
     {{ history | tojson | safe }}
   </script>
+
   <script>
-    // Feather icons ativar
     feather.replace()
   </script>
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>

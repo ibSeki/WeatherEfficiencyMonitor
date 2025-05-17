@@ -16,66 +16,86 @@ window.addEventListener("DOMContentLoaded", () => {
   function updateHistoryCount() {
     if (historyCountElem) {
       historyCountElem.textContent = `Histórico (últimos ${history.length})`;
+      historyCountElem.style.minWidth = "200px";
+      historyCountElem.style.whiteSpace = "nowrap";
+      historyCountElem.style.overflow = "hidden";
+      historyCountElem.style.textOverflow = "ellipsis";
     }
   }
 
   function createChart(data) {
-  const labels = data.map(item => new Date(item[2]).toLocaleString("pt-BR"));
-  const tempData = data.map(item => item[0]);
-  const effData = data.map(item => item[1]);
-  const cities = data.map(item =>
-    (typeof item[3] === "string" && item[3].trim() !== "")
-      ? item[3].trim()
-      : "ND"
-  );
+    const maxPoints = 30; 
+    const slicedData = data.slice(0, maxPoints).reverse(); 
 
-  
-  if (data.length === 0) {
-    ctx.canvas.height = 100; 
-  } else if (data.length < 10) {
-    ctx.canvas.height = 200; 
-  } else {
-    ctx.canvas.height = 400; 
-  }
+    const labels   = slicedData.map(item => new Date(item[2]).toLocaleString("pt-BR"));
+    const tempData = slicedData.map(item => item[0]);
+    const effData  = slicedData.map(item => item[1]);
+    const cities   = slicedData.map(item =>
+      (typeof item[3] === "string" && item[3].trim() !== "")
+        ? item[3].trim()
+        : "ND"
+    );
 
-  if (chart) {
-    chart.destroy();
-  }
+    if (chart) {
+      chart.destroy();
+    }
 
-  chart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels,
-      datasets: [
-        { label: "Temperatura (°C)", data: tempData, borderColor: "blue",  borderWidth: 2, fill: false, tension: 0.2 },
-        { label: "Eficiência (%)",    data: effData,  borderColor: "green", borderWidth: 2, fill: false, tension: 0.2 }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false, // importante para respeitar o height definido
-      scales: {
-        x: { 
-          display: true, 
-          title: { display: true, text: "Data/Hora" },
-          ticks: data.length === 0 ? { display: false } : { maxRotation: 45, minRotation: 0, maxTicksLimit: 15 }
-        },
-        y: { beginAtZero: true }
+    chart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          { label: "Temperatura (°C)", data: tempData, borderColor: "blue",  borderWidth: 2, fill: false, tension: 0.2 },
+          { label: "Eficiência (%)",    data: effData,  borderColor: "green", borderWidth: 2, fill: false, tension: 0.2 }
+        ]
       },
-      plugins: {
-        tooltip: {
-          callbacks: {
-            title: ctxArr => {
-              const idx = ctxArr[0].dataIndex;
-              return `${ctxArr[0].label} — ${cities[idx]}`;
+      options: {
+        responsive: true,
+        maintainAspectRatio: false, 
+        scales: {
+          x: {
+            display: true,
+            title: {
+              display: true,
+              text: "Data/Hora",
+              color: "#ffffff",
+              font: { size: 16, weight: "bold" }
+            },
+            ticks: {
+              maxRotation: 90,
+              minRotation: 45,
+              maxTicksLimit: 10,
+              color: "#ffffff",
+              font: { size: 14 }
+            }
+          },
+          y: {
+            beginAtZero: true,
+            ticks: {
+              color: "#ffffff",
+              font: { size: 14 }
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            labels: {
+              font: { size: 16, weight: "bold" },
+              color: "#ffffff"
+            }
+          },
+          tooltip: {
+            callbacks: {
+              title: ctxArr => {
+                const idx = ctxArr[0].dataIndex;
+                return `${ctxArr[0].label} — ${cities[idx]}`;
+              }
             }
           }
         }
       }
-    }
-  });
-}
-
+    });
+  }
 
   createChart(history);
   updateHistoryCount();
@@ -180,8 +200,21 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("toggle-auto-update")?.addEventListener("click", () => {
     autoUpdatePaused = !autoUpdatePaused;
     const btn = document.getElementById("toggle-auto-update");
-    if (btn) btn.textContent = autoUpdatePaused ? "Reiniciar Atualização" : "Pausar Atualização";
-    if (!autoUpdatePaused) startInterval();
+    if (btn) {
+      const iconPlay  = btn.querySelector("#play-icon");
+      const iconPause = btn.querySelector("#pause-icon");
+      const textSpan  = btn.querySelector("#auto-update-text");
+      if (autoUpdatePaused) {
+        iconPlay.classList.remove("hidden");
+        iconPause.classList.add("hidden");
+        textSpan.textContent = "Reiniciar Atualização";
+      } else {
+        iconPlay.classList.add("hidden");
+        iconPause.classList.remove("hidden");
+        textSpan.textContent = "Pausar Atualização";
+        startInterval();
+      }
+    }
   });
 
   startInterval();

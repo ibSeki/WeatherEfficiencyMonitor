@@ -93,11 +93,11 @@ button#save-history:hover {
   flex-wrap: wrap;
 }
 
-/* Ajuste no container do gráfico */
+
 #chart-container {
   width: 100%;
-  max-width: 700px;  /* controla largura máxima */
-  height: 400px;     /* altura fixa */
+  max-width: 700px;  
+  height: 400px;     
   margin: 0 auto;
   position: relative;
 }
@@ -107,14 +107,14 @@ canvas#lineChart {
   height: 100% !important;
 }
 
-/* Ajuste no canvas do gráfico */
+
 #lineChart {
   width: 100% !important;
   height: 100% !important;
   display: block;
 }
 
-/* Toast notification styles */
+
 #toast {
   position: fixed;
   bottom: 20px;

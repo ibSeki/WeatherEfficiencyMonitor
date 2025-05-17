@@ -60,7 +60,6 @@ def update():
 
     api_key = os.getenv("WEATHER_API_KEY")
     try:
-        # Busca o nome da cidade a partir das coordenadas
         url = f"https://api.openweathermap.org/geo/1.0/reverse?lat={lat}&lon={lon}&limit=1&appid={api_key}"
         response = requests.get(url)
         response.raise_for_status()
@@ -92,7 +91,7 @@ def clear_history():
 
 @bp.route('/download-excel')
 def download_excel():
-    from database.repository import generate_excel  # importe aqui para evitar NameError
+    from database.repository import generate_excel  
     excel_file = generate_excel()
     if not excel_file:
         return "Nenhum dado para exportar.", 404

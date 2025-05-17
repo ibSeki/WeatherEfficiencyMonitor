@@ -3,6 +3,20 @@ window.addEventListener("DOMContentLoaded", () => {
   let history = JSON.parse(raw);
 
   const ctx = document.getElementById("lineChart").getContext("2d");
+  const historyCountElem = document.getElementById("history-count");
+  const tempElem = document.getElementById("temperature");
+  const effElem = document.getElementById("efficiency");
+  const timestampElem = document.getElementById("timestamp");
+  const cityInput = document.getElementById("city");
+
+  let autoUpdatePaused = false;
+  let intervalId;
+
+  function updateHistoryCount() {
+    if (historyCountElem) {
+      historyCountElem.textContent = `Histórico (últimos ${history.length})`;
+    }
+  }
 
   const createChart = (data) => {
     const labels = data.map(item => item[2]);
@@ -17,17 +31,17 @@ window.addEventListener("DOMContentLoaded", () => {
           {
             label: "Temperatura (°C)",
             data: tempData,
+            borderColor: "blue",
             borderWidth: 2,
             fill: false,
-            borderColor: 'rgb(59 130 246)', // Tailwind blue-500
             tension: 0.2,
           },
           {
             label: "Eficiência (%)",
             data: effData,
+            borderColor: "green",
             borderWidth: 2,
             fill: false,
-            borderColor: 'rgb(16 185 129)', // Tailwind green-500
             tension: 0.2,
           }
         ]
@@ -45,6 +59,11 @@ window.addEventListener("DOMContentLoaded", () => {
             }
           },
           y: { beginAtZero: true }
+        },
+        plugins: {
+          tooltip: {
+            enabled: true
+          }
         }
       }
     });
@@ -52,18 +71,13 @@ window.addEventListener("DOMContentLoaded", () => {
 
   let chart = createChart(history);
 
-  // Atualizar dados via localização automática
   const updateData = async () => {
-    if (!navigator.geolocation) {
-      console.log("Geolocalização não suportada pelo navegador.");
-      return;
-    }
+    if (!navigator.geolocation) return;
 
     navigator.geolocation.getCurrentPosition(async (pos) => {
       const lat = pos.coords.latitude;
       const lon = pos.coords.longitude;
 
-      // Atualiza o campo cidade automaticamente via reverse geocode
       try {
         const resGeo = await fetch("/geolocate", {
           method: "POST",
@@ -72,16 +86,12 @@ window.addEventListener("DOMContentLoaded", () => {
         });
         const geoData = await resGeo.json();
         if (geoData.city) {
-          const cityInput = document.getElementById("city");
-          if (cityInput.value.trim() === "") {
-            cityInput.value = geoData.city;
-          }
+          cityInput.value = geoData.city;
         }
       } catch (e) {
-        console.log("Erro ao obter cidade pela geolocalização:", e);
+        console.error("Erro no reverse geocode:", e);
       }
 
-      // Busca os dados climáticos atualizados
       try {
         const res = await fetch("/update", {
           method: "POST",
@@ -89,59 +99,73 @@ window.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify({ lat, lon }),
         });
         const data = await res.json();
-
         if (data.error) {
-          console.log("Erro ao atualizar dados:", data.error);
+          console.error("Erro ao atualizar dados:", data.error);
           return;
         }
 
-        // Atualiza o histórico local e o gráfico
-        const now = new Date().toISOString().slice(0, 19).replace("T", " ");
+        const now = new Date().toLocaleString("pt-BR");
+        tempElem.textContent = data.temperature.toFixed(2) + "°C";
+        effElem.textContent = data.efficiency.toFixed(2) + "%";
+        timestampElem.textContent = now;
+
         history.unshift([data.temperature, data.efficiency, now]);
         if (history.length > 100) history.pop();
 
+        updateHistoryCount();
+
         chart.destroy();
         chart = createChart(history);
-
-        // Atualiza a exibição de temperatura e eficiência na página
-        const tempElem = document.querySelector("p strong:contains('Temperatura:')");
-        const effElem = document.querySelector("p strong:contains('Eficiência:')");
-        const timestampElem = document.querySelector("p strong:contains('Data/Hora:')");
-
-        // Como querySelector com :contains não funciona, atualizar via IDs (vou sugerir IDs)
-        // Se preferir posso te ajudar a alterar o HTML para adicionar IDs para esses elementos e atualizar aqui
-
       } catch (e) {
-        console.log("Erro ao obter dados atualizados:", e);
+        console.error("Erro ao obter dados atualizados:", e);
       }
-    }, (err) => {
-      console.log("Erro na geolocalização:", err.message);
+    }, err => {
+      console.error("Geolocalização falhou:", err.message);
     });
   };
 
-  // Atualiza a cada 30 segundos
-  let intervalId = setInterval(updateData, 30000);
+  function startInterval() {
+    intervalId = setInterval(() => {
+      if (!autoUpdatePaused) {
+        updateData();
+      }
+    }, 30000);
+  }
 
-  // Rodar updateData logo no começo para pegar os dados iniciais
+  updateHistoryCount();
   updateData();
+  startInterval();
 
-  // Botão limpar histórico
-  const clearBtn = document.getElementById("clear-btn");
-  clearBtn.addEventListener("click", async () => {
+  document.getElementById("clear-history").addEventListener("click", async () => {
     if (!confirm("Deseja realmente limpar todo o histórico?")) return;
-
     try {
       const res = await fetch("/clear-history", { method: "POST" });
-      const data = await res.json();
-      if (data.success) {
+      const result = await res.json();
+      if (result.success) {
         history = [];
+        updateHistoryCount();
         chart.destroy();
         chart = createChart(history);
+        tempElem.textContent = "--";
+        effElem.textContent = "--";
+        timestampElem.textContent = "--";
       } else {
-        alert("Erro ao limpar histórico: " + (data.error || "Desconhecido"));
+        alert("Falha ao limpar histórico: " + (result.error || ""));
       }
-    } catch (err) {
-      alert("Erro ao limpar histórico: " + err.message);
+    } catch (e) {
+      alert("Erro ao limpar histórico: " + e.message);
     }
+  });
+
+  cityInput.addEventListener("input", () => {
+    autoUpdatePaused = true;
+    clearInterval(intervalId);   
+    startInterval();             
+  });
+
+  const toggleBtn = document.getElementById("toggle-auto-update");
+  toggleBtn.addEventListener("click", () => {
+    autoUpdatePaused = !autoUpdatePaused;
+    toggleBtn.textContent = autoUpdatePaused ? "Reiniciar Atualização" : "Pausar Atualização";
   });
 });

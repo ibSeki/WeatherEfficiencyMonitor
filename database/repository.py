@@ -2,6 +2,8 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from datetime import datetime
 import os
+import pandas as pd
+from io import BytesIO
 
 DB_NAME = os.getenv('DB_NAME')
 DB_USER = os.getenv('DB_USER')
@@ -55,3 +57,19 @@ def clear_weather_history():
                 cur.execute(sql)
     finally:
         conn.close()
+
+def generate_excel():
+    history = get_weather_history() 
+    if not history:
+        return None
+
+    df = pd.DataFrame(history)
+
+    df = df[['city', 'temperature', 'efficiency', 'datetime']]
+
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Histórico')
+
+    output.seek(0)
+    return output

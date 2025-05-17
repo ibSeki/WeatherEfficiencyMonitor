@@ -3,6 +3,9 @@ from database.repository import get_weather_history, insert_weather_data, clear_
 from services.weather_service import get_weather_data
 from services.efficiency import calculate_efficiency
 from datetime import datetime
+from flask import send_file
+from io import BytesIO
+from database.repository import generate_excel
 import requests
 import os
 
@@ -83,3 +86,16 @@ def clear_history():
     except Exception as e:
         print(f"Erro ao limpar histórico: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@bp.route('/download-excel')
+def download_excel():
+    excel_file = generate_excel()
+    if not excel_file:
+        return "Nenhum dado para exportar.", 404
+
+    return send_file(
+        excel_file,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name='historico_maquina.xlsx'
+    )

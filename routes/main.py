@@ -1,10 +1,8 @@
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, send_file
 from database.repository import get_weather_history, insert_weather_data, clear_weather_history
 from services.weather_service import get_weather_data, get_weather_by_coords
 from services.efficiency import calculate_efficiency
 from datetime import datetime
-from flask import send_file
-from database.repository import generate_excel
 import requests
 import os
 
@@ -30,7 +28,7 @@ def index():
     history = get_weather_history() or []
     return render_template("index.html", city=city or "", temperature=temperature,
                            efficiency=efficiency, timestamp=timestamp, history=[
-                               [item["temperature"], item["efficiency"], item["datetime"]] for item in history
+                               [item["temperature"], item["efficiency"], item["datetime"], item.get("city", "ND")] for item in history
                            ])
 
 @bp.route('/geolocate', methods=['POST'])
@@ -60,13 +58,22 @@ def update():
     if lat is None or lon is None:
         return jsonify({'error': 'Coordenadas ausentes'}), 400
 
+    api_key = os.getenv("WEATHER_API_KEY")
     try:
+        # Busca o nome da cidade a partir das coordenadas
+        url = f"https://api.openweathermap.org/geo/1.0/reverse?lat={lat}&lon={lon}&limit=1&appid={api_key}"
+        response = requests.get(url)
+        response.raise_for_status()
+        result = response.json()
+        city = result[0]["name"] if result else "auto-location"
+
         weather = get_weather_by_coords(lat, lon)
         temp = weather['temperature']
         efficiency = calculate_efficiency(temp)
-        insert_weather_data("auto-location", temp, efficiency)
+        insert_weather_data(city, temp, efficiency)
 
         return jsonify({
+            'city': city,
             'temperature': temp,
             'efficiency': efficiency
         })
@@ -85,6 +92,7 @@ def clear_history():
 
 @bp.route('/download-excel')
 def download_excel():
+    from database.repository import generate_excel  # importe aqui para evitar NameError
     excel_file = generate_excel()
     if not excel_file:
         return "Nenhum dado para exportar.", 404

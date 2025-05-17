@@ -1,10 +1,9 @@
 from flask import Blueprint, render_template, request, jsonify
 from database.repository import get_weather_history, insert_weather_data, clear_weather_history
-from services.weather_service import get_weather_data
+from services.weather_service import get_weather_data, get_weather_by_coords
 from services.efficiency import calculate_efficiency
 from datetime import datetime
 from flask import send_file
-from io import BytesIO
 from database.repository import generate_excel
 import requests
 import os
@@ -62,11 +61,8 @@ def update():
         return jsonify({'error': 'Coordenadas ausentes'}), 400
 
     try:
-        url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={os.getenv('WEATHER_API_KEY')}&units=metric"
-        response = requests.get(url)
-        response.raise_for_status()
-        data = response.json()
-        temp = data['main']['temp']
+        weather = get_weather_by_coords(lat, lon)
+        temp = weather['temperature']
         efficiency = calculate_efficiency(temp)
         insert_weather_data("auto-location", temp, efficiency)
 
@@ -99,3 +95,28 @@ def download_excel():
         as_attachment=True,
         download_name='historico_maquina.xlsx'
     )
+
+@bp.route('/update-manual', methods=['POST'])
+def update_manual():
+    data = request.get_json()
+    city = data.get('city')
+
+    if not city:
+        return jsonify({'error': 'Cidade não informada'}), 400
+
+    try:
+        weather = get_weather_data(city)
+        temperature = weather["temperature"]
+        efficiency = calculate_efficiency(temperature)
+        insert_weather_data(city, temperature, efficiency)
+        timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+
+        return jsonify({
+            'city': city,
+            'temperature': temperature,
+            'efficiency': efficiency,
+            'timestamp': timestamp
+        })
+    except Exception as e:
+        print("Erro ao obter dados do clima no update manual:", e)
+        return jsonify({'error': 'Erro ao obter dados do clima'}), 500

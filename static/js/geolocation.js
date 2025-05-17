@@ -1,11 +1,11 @@
 window.addEventListener("DOMContentLoaded", () => {
   const cityInput = document.getElementById("city");
+  const cityDisplay = document.getElementById("city-display");
 
   if (!cityInput.value && navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
-      position => {
+      (position) => {
         const { latitude, longitude } = position.coords;
-
         fetch("/geolocate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -15,6 +15,7 @@ window.addEventListener("DOMContentLoaded", () => {
           .then(data => {
             if (data.city) {
               cityInput.value = data.city;
+              cityDisplay.textContent = data.city;
             }
           })
           .catch(err => console.error("Erro ao obter cidade:", err));

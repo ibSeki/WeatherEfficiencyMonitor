@@ -7,6 +7,9 @@
   <title>Monitoramento da Máquina</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/static/js/geolocation.js"></script>
+  <script src="/static/js/main.js"></script>
+
 </head>
 
 <body class="bg-gray-100 text-gray-800">
@@ -26,6 +29,7 @@
 
     {% if city and temperature is not none %}
     <div class="text-center space-y-1">
+      <p><strong>Cidade:</strong> <span id="city-display">{{ city if city else '--' }}</span></p>
       <p><strong>Data/Hora:</strong> <span id="timestamp">{{ timestamp }}</span></p>
       <p><strong>Temperatura:</strong> <span id="temperature">{{ temperature }}°C</span></p>
       <p><strong>Eficiência:</strong> <span id="efficiency">{{ efficiency }}%</span></p>

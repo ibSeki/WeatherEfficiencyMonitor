@@ -1,3 +1,9 @@
+# 🌡️ WeatherEfficiencyMonitor
+
+Projeto simples em Python + Flask que monitora a eficiência de uma máquina com base na temperatura ambiente obtida pela API do OpenWeather. Você pode ver o histórico, atualizar manualmente, usar geolocalização e exportar os dados para Excel.
+
+🔗 [Repositório no GitHub](https://github.com/ibSeki/WeatherEfficiencyMonitor.git)
+
 ## ⚙️ Como Funciona?
 
 - 🔍 Busca a temperatura do local (cidade ou coordenadas) via API do OpenWeather

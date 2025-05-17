@@ -1,6 +1,8 @@
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from datetime import datetime
+from openpyxl.styles import Font, Alignment, PatternFill
+from openpyxl.utils import get_column_letter
 import os
 import pandas as pd
 from io import BytesIO
@@ -59,17 +61,40 @@ def clear_weather_history():
         conn.close()
 
 def generate_excel():
-    history = get_weather_history() 
+    history = get_weather_history()
     if not history:
         return None
 
     df = pd.DataFrame(history)
-
     df = df[['city', 'temperature', 'efficiency', 'datetime']]
 
     output = BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='Histórico')
+        workbook  = writer.book
+        worksheet = writer.sheets['Histórico']
+
+        # Formatar cabeçalho: negrito, fundo azul claro, alinhamento centralizado
+        header_font = Font(bold=True, color="FFFFFF")
+        header_fill = PatternFill(start_color="4F81BD", end_color="4F81BD", fill_type="solid")
+        header_alignment = Alignment(horizontal="center", vertical="center")
+
+        for col_num, col_letter in enumerate(worksheet.iter_cols(min_row=1, max_row=1), 1):
+            cell = worksheet.cell(row=1, column=col_num)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_alignment
+
+        # Ajustar largura das colunas com base no conteúdo
+        for i, column_cells in enumerate(worksheet.columns, 1):
+            max_length = max(len(str(cell.value)) if cell.value else 0 for cell in column_cells)
+            adjusted_width = (max_length + 2)
+            worksheet.column_dimensions[get_column_letter(i)].width = adjusted_width
+
+        # Alinhar dados das colunas numéricas à direita
+        for row in worksheet.iter_rows(min_row=2, max_row=worksheet.max_row, min_col=2, max_col=3):
+            for cell in row:
+                cell.alignment = Alignment(horizontal='right')
 
     output.seek(0)
     return output

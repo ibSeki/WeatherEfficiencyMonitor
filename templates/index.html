@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Monitoramento da Máquina</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -29,6 +29,15 @@
         Atualizar
       </button>
     </form>
+
+    <div class="flex justify-center gap-4">
+      <button
+        id="clear-btn"
+        class="px-6 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition"
+      >
+        Limpar Histórico
+      </button>
+    </div>
 
     {% if temperature is not none %}
     <div class="text-center space-y-1">

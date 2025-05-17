@@ -10,6 +10,7 @@ DB_HOST = os.getenv('DB_HOST')
 DB_PORT = os.getenv('DB_PORT')
 
 def get_connection():
+    print(f"Conectando ao banco: {DB_NAME}@{DB_HOST}:{DB_PORT} como {DB_USER}")
     return psycopg2.connect(
         dbname=DB_NAME,
         user=DB_USER,
@@ -40,7 +41,8 @@ def get_weather_history():
         with conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(sql)
-                return cur.fetchall()
+                results = cur.fetchall()
+                return results
     finally:
         conn.close()
 

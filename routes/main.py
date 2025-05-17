@@ -1,10 +1,10 @@
 from flask import Blueprint, render_template, request, jsonify
-from database.repository import get_weather_history, insert_weather_data
-from services.weather_service import get_weather_data, get_weather_by_coords
+from database.repository import get_weather_history, insert_weather_data, clear_weather_history
+from services.weather_service import get_weather_data
 from services.efficiency import calculate_efficiency
+from datetime import datetime
 import requests
 import os
-from datetime import datetime
 
 bp = Blueprint('main', __name__)
 
@@ -58,17 +58,28 @@ def update():
     if lat is None or lon is None:
         return jsonify({'error': 'Coordenadas ausentes'}), 400
 
-    weather = get_weather_by_coords(lat, lon)
-    if not weather:
+    try:
+        url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={os.getenv('WEATHER_API_KEY')}&units=metric"
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+        temp = data['main']['temp']
+        efficiency = calculate_efficiency(temp)
+        insert_weather_data("auto-location", temp, efficiency)
+
+        return jsonify({
+            'temperature': temp,
+            'efficiency': efficiency
+        })
+    except Exception as e:
+        print("Erro ao obter dados climáticos:", e)
         return jsonify({'error': 'Erro ao obter dados climáticos'}), 500
 
-    temp = weather['temperature']
-    efficiency = calculate_efficiency(temp)
-    insert_weather_data("auto-location", temp, efficiency)
-
-    return jsonify({
-        'temperature': temp,
-        'efficiency': efficiency,
-        'timestamp': datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-    })
-
+@bp.route('/clear-history', methods=['POST'])
+def clear_history():
+    try:
+        clear_weather_history()
+        return jsonify({'success': True})
+    except Exception as e:
+        print(f"Erro ao limpar histórico: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
